@@ -17,3 +17,23 @@ def create_db():
     conn.executescript((BASE_DIR / "sample_data.sql").read_text())
     conn.commit()
     conn.close()
+
+
+def get_document(doc_id):
+    conn = create_conn()
+    doc = conn.execute("SELECT * FROM documents WHERE id = ?", (doc_id, )).fetchone()
+    conn.close()
+    return dict(doc) if doc else None
+
+
+def get_order(order_id):
+    conn = create_conn()
+    order = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id, )).fetchone()
+    conn.close()
+    return dict(order) if order else None
+
+def get_all_users():
+    conn = create_conn()
+    users = conn.execute("SELECT * FROM users").fetchall()
+    conn.close()
+    return [dict(user) for user in users]
