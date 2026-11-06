@@ -37,3 +37,103 @@ def get_all_users():
     users = conn.execute("SELECT * FROM users").fetchall()
     conn.close()
     return [dict(user) for user in users]
+
+
+def get_all_orders():
+    conn = create_conn()
+    try:
+        rows = conn.execute("SELECT * FROM orders").fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def create_order(owner_id, item, amount):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            """INSERT INTO orders (owner_id, item, amount)
+               VALUES (?, ?, ?)""",
+            (owner_id, item, amount)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def update_order(order_id, item, amount):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            """UPDATE orders SET item = ?, amount = ?
+               WHERE id = ?""",
+            (item, amount, order_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_order(order_id):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM orders WHERE id = ?",
+            (order_id,)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def get_all_documents():
+    conn = create_conn()
+    try:
+        rows = conn.execute("SELECT * FROM documents").fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        conn.close()
+
+
+def create_document(owner_id, title, content):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            """INSERT INTO documents (owner_id, title, content)
+               VALUES (?, ?, ?)""",
+            (owner_id, title, content)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def update_document(doc_id, title, content):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            """UPDATE documents SET title = ?, content = ?
+               WHERE id = ?""",
+            (title, content, doc_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_document(doc_id):
+    conn = create_conn()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM documents WHERE id = ?",
+            (doc_id,)
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        conn.close()
