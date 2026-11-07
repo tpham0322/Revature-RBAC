@@ -35,3 +35,29 @@ def get_current_user():
         abort(401, message="User does not exist")
 
     return current_user
+
+
+# ----------------------------------------
+# Function Level Authorization (BFLA fix)
+# ----------------------------------------
+
+def has_permission(user, permission):
+    return permission in ROLE_PERMISSIONS.get(user["role"], [])
+
+def enforce_rbac():
+    """
+    Will run before every request to:
+    1. Get the current user and set it for the current session (via Flask.g)
+    2. Check authorization for the request based on the users role/permissions
+    """
+    g.user = get_current_user()
+    if not has_permission(g.user, request.endpoint):
+        abort(403)
+
+# ----------------------------------------
+# Object Level Authorization (BOLA fix)
+# ----------------------------------------
+
+def can_access(current_user, resource):
+    """Authorization check, can current user access the requested document/order"""
+    return resource.get("owner_id") == current_user.get("id")
