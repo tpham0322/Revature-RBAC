@@ -175,7 +175,6 @@ def delete_document(doc_id):
 
 @app.get("/admin/users")
 def list_users():
-    """Vulnerable: allows any user to access admin endpoint"""
     return jsonify(db.get_all_users())
 
 if __name__ == "__main__":
