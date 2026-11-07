@@ -32,6 +32,12 @@ def get_order(order_id):
     conn.close()
     return dict(order) if order else None
 
+def get_user(token):
+    conn = create_conn()
+    user = conn.execute("SELECT * FROM users WHERE token = ?", (token, )).fetchone()
+    conn.close()
+    return dict(user) if user else None
+
 def get_all_users():
     conn = create_conn()
     users = conn.execute("SELECT * FROM users").fetchall()
