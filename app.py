@@ -5,6 +5,34 @@ import db_creation.db as db
 app = Flask(__name__)
 
 
+# -------------------------
+# Error Handler
+# -------------------------
+@app.errorhandler(401)
+def handle_unauthorized(error):
+    response = jsonify({
+        "error": "Unauthorized",
+        "message": error.message
+    })
+    return response, 401
+
+@app.errorhandler(403)
+def handle_unauthorized(error):
+    response = jsonify({
+        "error": "Forbidden",
+        "message": error.message
+    })
+    return response, 403
+
+@app.errorhandler(404)
+def handle_unauthorized(error):
+    response = jsonify({
+        "error": "Not found",
+        "message": error.message
+    })
+    return response, 404
+
+
 @app.route("/test")
 def test():
     return jsonify(status="ok")
