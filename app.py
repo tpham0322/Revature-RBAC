@@ -1,7 +1,7 @@
 
 from flask import Flask, jsonify, abort, request, g
 import db_creation.db as db
-from auth_check import enforce_rbac, can_access
+from auth_check import enforce_rbac, owner_check
 
 app = Flask(__name__)
 app.before_request(enforce_rbac)    
@@ -42,6 +42,13 @@ def handle_not_found(error):
     })
     return response, 404
 
+def field_check(*fields):
+    data = request.get_json(silent=True) or {}
+    if not all(f in data for f in fields):
+        abort(400, description="Missing required fields")
+    return data
+    
+
 # -------------------------
 # HEALTH CHECK
 # -------------------------
@@ -57,52 +64,31 @@ def test():
 
 @app.get("/orders/<int:order_id>")
 def get_order(order_id):
-    order = db.get_order(order_id)
-    # Returns 404 for both so attacker won't know whether resource exists or not
-    if not order or not can_access(g.user, order):
-        abort(404, description="Order does not exist")
-
-    return jsonify(order)
+    return jsonify(owner_check(db.get_order, order_id))
 
 
 @app.post("/orders")
 def create_order():
-    data = request.get_json(silent=True) or {}
-
-    if not all(k in data for k in ("item", "amount")):
-        abort(400, description="Missing required fields")
-
+    data = field_check("item", "amount")
     order_id = db.create_order(
         owner_id = g.user.get("id"), # Instead of taking owner_id from the request, get the current authenticated user id
         item = data["item"],
         amount = data["amount"]
     )
-
     return jsonify(message="Order created", id=order_id), 201
 
 
 @app.put("/orders/<int:order_id>")
 def update_order(order_id):
-    data = request.get_json(silent=True) or {}
-
-    if not all(k in data for k in ("item", "amount")):
-        abort(400, description="Missing required fields")
- 
-    order = db.get_order(order_id)
-    if not order or not can_access(g.user, order): # Is the current authenticated user allowed to update the order
-        abort(404, description="Order not found")
-
+    data = field_check("item", "amount")
+    owner_check(db.get_order, order_id)
     db.update_order(order_id, data["item"], data["amount"])
-
     return jsonify(message="Order updated")
 
 
 @app.delete("/orders/<int:order_id>")
 def delete_order(order_id):
-    order = db.get_order(order_id)
-    if not order or not can_access(g.user, order):
-        abort(404, description="Order not found")
-
+    owner_check(db.get_order, order_id)
     db.delete_order(order_id)
     return jsonify(message="Order deleted")
 
@@ -113,59 +99,35 @@ def delete_order(order_id):
 
 @app.get("/documents/<int:doc_id>")
 def get_document(doc_id):
-
-    doc = db.get_document(doc_id)
-
-    if not doc or not can_access(g.user, doc):
-        abort(404, "Document does not exist")
-
-    return jsonify(doc)
-
+    return jsonify(owner_check(db.get_document, doc_id))
 
 @app.post("/documents")
 def create_document():
-    data = request.get_json(silent=True) or {}
-
-    if not all(k in data for k in ( "title", "content")):
-        return jsonify(error="Missing required fields"), 400
-
+    data = field_check("title", "content")
     doc_id = db.create_document(
         owner_id = g.user.get("id"),
         title = data["title"],
         content = data["content"]
     )
-
     return jsonify(message="Document created", id=doc_id), 201
 
 
 @app.put("/documents/<int:doc_id>")
 def update_document(doc_id):
-    data = request.get_json(silent=True) or {}
-
-    if not all(k in data for k in ("title", "content")):
-        abort(400, description="Missing required fields")
-
-    doc = db.get_document(doc_id)
-    if not doc or not can_access(g.user, doc):
-        abort(404, description="Document not found")
-
+    data = field_check("title", "content")
+    owner_check(db.get_document, doc_id)
     db.update_document(
         doc_id,
         data["title"],
         data["content"]
     )
-
     return jsonify(message="Document updated")
 
 
 @app.delete("/documents/<int:doc_id>")
 def delete_document(doc_id):
-    doc = db.get_document(doc_id)
-    if not doc or not can_access(g.user, doc):
-        abort(404, description="Document not found")
-
+    owner_check(db.get_document, doc_id)
     db.delete_document(doc_id)
-
     return jsonify(message="Document deleted")
 
 

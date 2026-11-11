@@ -61,3 +61,9 @@ def enforce_rbac():
 def can_access(current_user, resource):
     """Authorization check, can current user access the requested document/order"""
     return resource.get("owner_id") == current_user.get("id")
+
+def load_resource(db_function, resource_id):
+    resource = db_function(resource_id)
+    if not resource or not can_access(g.user, resource):
+        abort(404)
+    return resource
