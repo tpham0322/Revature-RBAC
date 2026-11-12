@@ -1,7 +1,7 @@
 
 from flask import Flask, jsonify, abort, request, g
 import db_creation.db as db
-from auth_check import enforce_rbac, owner_check
+from auth_check import enforce_rbac, load_resource
 
 app = Flask(__name__)
 app.before_request(enforce_rbac)    
@@ -64,7 +64,7 @@ def test():
 
 @app.get("/orders/<int:order_id>")
 def get_order(order_id):
-    return jsonify(owner_check(db.get_order, order_id))
+    return jsonify(load_resource(db.get_order, order_id))
 
 
 @app.post("/orders")
@@ -81,14 +81,14 @@ def create_order():
 @app.put("/orders/<int:order_id>")
 def update_order(order_id):
     data = field_check("item", "amount")
-    owner_check(db.get_order, order_id)
+    load_resource(db.get_order, order_id)
     db.update_order(order_id, data["item"], data["amount"])
     return jsonify(message="Order updated")
 
 
 @app.delete("/orders/<int:order_id>")
 def delete_order(order_id):
-    owner_check(db.get_order, order_id)
+    load_resource(db.get_order, order_id)
     db.delete_order(order_id)
     return jsonify(message="Order deleted")
 
@@ -99,7 +99,7 @@ def delete_order(order_id):
 
 @app.get("/documents/<int:doc_id>")
 def get_document(doc_id):
-    return jsonify(owner_check(db.get_document, doc_id))
+    return jsonify(load_resource(db.get_document, doc_id))
 
 @app.post("/documents")
 def create_document():
@@ -115,7 +115,7 @@ def create_document():
 @app.put("/documents/<int:doc_id>")
 def update_document(doc_id):
     data = field_check("title", "content")
-    owner_check(db.get_document, doc_id)
+    load_resource(db.get_document, doc_id)
     db.update_document(
         doc_id,
         data["title"],
@@ -126,7 +126,7 @@ def update_document(doc_id):
 
 @app.delete("/documents/<int:doc_id>")
 def delete_document(doc_id):
-    owner_check(db.get_document, doc_id)
+    load_resource(db.get_document, doc_id)
     db.delete_document(doc_id)
     return jsonify(message="Document deleted")
 
